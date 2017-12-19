@@ -1,0 +1,7 @@
+{
+  "name": "textlights",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "PhastPhood <jeffrey.gao@vanderbilt.edu>",
+  "license": "MIT"
+}
