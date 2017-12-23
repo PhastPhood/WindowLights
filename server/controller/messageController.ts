@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import {default as Texter, Text, TexterModel, TextModel} from './Texter';
-import sendTextMessage from './sendTextMessage';
-import responses from './responses';
-import { DEFAULT_MESSAGE_DISPLAY_TIME, DEFAULT_COLOR } from './constants'
+import { default as Text, TextModel } from '../model/Text';
+import { default as Texter, TexterModel } from '../model/Texter';
+import sendTextMessage from '../utils/sendTextMessage';
+import responses from '../model/responses';
+import { DEFAULT_MESSAGE_DISPLAY_TIME, DEFAULT_COLOR } from '../utils/constants'
 
 export let postMessage = (req: Request, res: Response) => {
   console.log(req.body);

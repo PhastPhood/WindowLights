@@ -4,7 +4,7 @@ import * as logger from 'morgan';
 import * as mongoose from 'mongoose';
 import * as dotenv from 'dotenv';
 
-import { postMessage } from './messageController';
+import { postMessage } from './controller/messageController';
 
 dotenv.config({ path: '.env' });
 
