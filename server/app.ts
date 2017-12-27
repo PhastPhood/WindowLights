@@ -4,7 +4,7 @@ import * as logger from 'morgan';
 import * as mongoose from 'mongoose';
 import * as dotenv from 'dotenv';
 
-import { postMessage } from './controller/messageController';
+import { getMessage, postMessage } from './controller/messageController';
 
 dotenv.config({ path: '.env' });
 
@@ -27,6 +27,7 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
-app.post('/postmessage', postMessage);
+app.get('/currentmessage', getMessage);
+app.post('/textmessage', postMessage);
 
 module.exports = app;
