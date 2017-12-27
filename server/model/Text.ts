@@ -1,20 +1,32 @@
 import * as mongoose from 'mongoose';
-import { DEFAULT_MESSAGE_DISPLAY_TIME, DEFAULT_COLOR } from '../utils/constants'
+import { DEFAULT_MESSAGE_DISPLAY_TIME, DEFAULT_COLOR, DEFAULT_EFFECT } from '../utils/constants'
 
 export type TextModel = mongoose.Document & {
+  texterId: string,
+  unparsedMessage: string,
   message: string,
+  color: string,
+  effect: string,
+
   responseId: string,
   rejected: boolean,
-  color: string,
+
+  lastDisplayed: number,
   startTime: number,
   endTime: number
 };
 
 export const textSchema = new mongoose.Schema({
+  texterId: String,
+  unparsedMessage: String,
   message: String,
+  color: { type: String, default: DEFAULT_COLOR },
+  effect: { type: String, default: DEFAULT_EFFECT },
+
   responseId: String,
   rejected: Boolean,
-  color: { type: String, default: DEFAULT_COLOR },
+
+  lastDisplayed: { type: Date, default: null },
   startTime: { type: Date, default: Date.now },
   endTime: { type: Date, default: () => { Date.now() + DEFAULT_MESSAGE_DISPLAY_TIME * 1000 } }
 });

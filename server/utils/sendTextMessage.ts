@@ -1,5 +1,4 @@
 const request = require('request');
-import * as dotenv from 'dotenv';
 
 export default function sendTextMessage(to: string, body: string) {
   const form = {

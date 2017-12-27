@@ -1,19 +1,25 @@
 import { Request, Response } from 'express';
+
 import { default as Text, TextModel } from '../model/Text';
 import { default as Texter, TexterModel } from '../model/Texter';
+import { default as textEffects, Message, parseTextEffects } from '../model/textEffects';
 import sendTextMessage from '../utils/sendTextMessage';
 import responses from '../model/responses';
-import { DEFAULT_MESSAGE_DISPLAY_TIME, DEFAULT_COLOR } from '../utils/constants'
+import { DEFAULT_MESSAGE_DISPLAY_TIME } from '../utils/constants';
 
 export let postMessage = (req: Request, res: Response) => {
   console.log(req.body);
-  const message = req.body.Body;
   const currentTime = Date.now();
 
+  const parsedMessage = parseTextEffects(req.body.Body);
+  const message = parsedMessage.body.trim();
+
   let text: TextModel = new Text({
+    unparsedMessage: req.body.Body,
     message: message,
     rejected: true,
-    color: DEFAULT_COLOR,
+    color: parsedMessage.color,
+    effect: parsedMessage.effect,
     startTime: currentTime,
     endTime: currentTime,
     responseId: ''
@@ -72,12 +78,16 @@ export let postMessage = (req: Request, res: Response) => {
             responseId = filteredResponses[Math.floor(filteredResponses.length * Math.random())];
           }
 
+          if (process.env.SEND_TEXTS === 'TRUE') {
           sendTextMessage(phoneNumber, responses.getResponseFromId(responseId, replace));
+          }
+
           text.responseId = responseId;
           if (!rejected) {
             text.endTime = currentTime + DEFAULT_MESSAGE_DISPLAY_TIME * 1000;
           }
           text.rejected = rejected;
+          text.texterId = texter.id;
 
           texter.texts.push(text);
           texter.save((err, texter) => {
