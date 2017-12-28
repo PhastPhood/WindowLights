@@ -163,6 +163,11 @@ export let postMessage = (req: Request, res: Response) => {
             responseId = responses.discriminatoryId;
             rejected = true;
             replace = false;
+          } else if (swearjar.scorecard(message).starwars) {
+            // check for discriminatory language
+            responseId = responses.starWarsId;
+            rejected = true;
+            replace = false;
           } else {
             // check for recent messages
             rejected = false;

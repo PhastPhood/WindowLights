@@ -157,6 +157,8 @@
   "fingerfucker": ["sexual"],
   "fingerfucking": ["sexual"],
   "fingerfucks": ["sexual"],
+  "finn": ["starwars"],
+  "first order": ["starwars"],
   "fistfuck": ["sexual"],
   "fistfucked": ["sexual"],
   "fistfucker": ["sexual"],
@@ -226,6 +228,8 @@
   "kunilingus": ["sexual"],
   "kunt": ["sexual"],
   "kyke": ["discriminatory"],
+  "kylo": ["starwars"],
+  "leia": ["starwars"],
   "lust": ["sexual"],
   "lusting": ["sexual"],
   "mcfagget": ["discriminatory"],
@@ -300,7 +304,9 @@
   "pussylicking": ["sexual"],
   "pusy": ["sexual"],
   "puto": ["insult"],
+  "snoke": ["starwars"],
   "renob": ["sexual"],
+  "rey": ["starwars"],
   "rimjob": ["sexual"],
   "ruski": ["discriminatory"],
   "sandnigger": ["discriminatory"],
@@ -359,5 +365,6 @@
   "wetback": ["discriminatory"],
   "whore": ["insult"],
   "whorebag": ["insult"],
-  "whoreface": ["insult"]
+  "whoreface": ["insult"],
+  "yoda": ["starwars"]
 }

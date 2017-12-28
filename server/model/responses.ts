@@ -6,6 +6,9 @@ const responses = {
   discriminatoryMessage: 'Looks like you might be using discriminatory language - don\'t be a dick please.',
   discriminatoryId: 'discriminatory',
 
+  starWarsMessage: 'Please no Star Wars spoilers!',
+  starWarsId: 'starWars',
+
   emailResponses: {
     bolognese: 'I\'m looking for a quality Bolognese recipe. If you have one, email me at ',
     clothing: 'I\'m convinced 0 people in Seattle own colorful clothing. If you have evidence to the contrary, mail to ',
@@ -25,12 +28,16 @@ const responses = {
   errorMessage: 'There was an error processing your message.',
 
   getResponseFromId(id: string, replace: boolean):string {
-    if (id == this.tooLongId) {
+    if (id === this.tooLongId) {
       return this.tooLongMessage;
     }
 
-    if (id == this.discriminatory) {
+    if (id === this.discriminatoryId) {
       return this.discriminatoryMessage;
+    }
+
+    if (id === this.starWarsId) {
+      return this.starWarsMessage;
     }
 
     if (this.emailResponses.hasOwnProperty(id)) {
