@@ -17,7 +17,7 @@ const responses = {
     vanderbilt: 'If you also went to Vanderbilt and want to commisserate on our basketball team\'s performance, mail me at ',
     karaoke: 'I\'m looking for a karaoke buddy to sing "Chicken Fried." Feel free to send your qualifications to ',
     fear: 'My greatest fear in life is not getting enough emails. If you sympathize, tell me your experience at ',
-    runescape: 'You can use RuneScape colors and effects on your message. Send me your favorite RuneScape memory at '
+    runescape: 'You can use RuneScape colors and effects on your message. 1v1 me in the wildy by emailing '
   },
 
   messageReceivedMessage: 'Your message will light up in a sec. ',
