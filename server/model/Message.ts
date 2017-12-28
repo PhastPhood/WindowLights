@@ -39,5 +39,5 @@ export function parseTextEffects(message: string):Message {
 export const textEffects = {
   colors: ['white', 'cyan', 'red', 'green', 'purple',
       'flash1', 'flash2', 'flash3', 'glow1', 'glow2', 'glow3'],
-  effects: ['none', 'scroll', 'slide', 'wave', 'wave2', 'shake']
+  effects: ['none', 'wave', 'wave2', 'shake']
 };
