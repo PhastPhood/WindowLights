@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { startOfDay } from 'date-fns';
+import * as swearjar from 'swearjar';
 
 import { default as CalendarDay, CalendarDayModel } from '../model/CalendarDay';
 import { default as Text, TextModel } from '../model/Text';
@@ -155,6 +156,11 @@ export let postMessage = (req: Request, res: Response) => {
           if (message.length >= 160) {
             // check length of message
             responseId = responses.tooLongId;
+            rejected = true;
+            replace = false;
+          } else if (swearjar.scorecard(message).discriminatory) {
+            // check for discriminatory language
+            responseId = responses.discriminatoryId;
             rejected = true;
             replace = false;
           } else {

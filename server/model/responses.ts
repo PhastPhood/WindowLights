@@ -3,6 +3,9 @@ const responses = {
   tooLongMessage: 'You\'re putting a message on a window that shows like 3 letters at a time. Keep it under 160 characters please!',
   tooLongId: 'tooLong',
 
+  discriminatoryMessage: 'Looks like you might be using discriminatory language - don\'t be a dick please.',
+  discriminatoryId: 'discriminatory',
+
   emailResponses: {
     bolognese: 'I\'m looking for a quality Bolognese recipe. If you have one, email me at ',
     clothing: 'I\'m convinced 0 people in Seattle own colorful clothing. If you have evidence to the contrary, mail to ',
@@ -24,6 +27,10 @@ const responses = {
   getResponseFromId(id: string, replace: boolean):string {
     if (id == this.tooLongId) {
       return this.tooLongMessage;
+    }
+
+    if (id == this.discriminatory) {
+      return this.discriminatoryMessage;
     }
 
     if (this.emailResponses.hasOwnProperty(id)) {
