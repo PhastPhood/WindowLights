@@ -3,8 +3,13 @@ import * as bodyParser from 'body-parser';
 import * as logger from 'morgan';
 import * as mongoose from 'mongoose';
 import * as dotenv from 'dotenv';
+import { addDays } from 'date-fns';
+import * as cron from 'cron';
+import * as google from 'googleapis';
 
 import { getMessage, postMessage } from './controller/messageController';
+import { updateCalendarEvents, googleJwtClient } from './controller/calendarController';
+import { parseTextEffects } from './model/Message';
 
 dotenv.config({ path: '.env' });
 
@@ -18,6 +23,14 @@ mongoose.connection.on("error", () => {
 });
 mongoose.set('debug', true);
 (<any>mongoose).Promise = global.Promise;
+
+let fetchNextDayJob = new cron.CronJob({ cronTime: '00 55 23 * * *', onTick: () => {
+  updateCalendarEvents(addDays(Date.now(), 1));
+}, start: true, timeZone: 'America/Los_Angeles' });
+
+let refreshCalendarEventsJob = new cron.CronJob({ cronTime: '00 */30 * * * *', onTick: () => {
+  updateCalendarEvents(new Date());
+}, start: true, timeZone: 'America/Los_Angeles', runOnInit: true });
 
 app.set("port", process.env.PORT || 3000);
 

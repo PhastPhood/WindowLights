@@ -1,31 +1,52 @@
 import { Request, Response } from 'express';
+import { startOfDay } from 'date-fns';
 
+import { default as CalendarDay, CalendarDayModel } from '../model/CalendarDay';
 import { default as Text, TextModel } from '../model/Text';
 import { default as Texter, TexterModel } from '../model/Texter';
-import { default as textEffects, Message, parseTextEffects } from '../model/textEffects';
+import { default as Message, textEffects, parseTextEffects } from '../model/Message';
 import sendTextMessage from '../utils/sendTextMessage';
 import responses from '../model/responses';
-import { DEFAULT_MESSAGE_DISPLAY_TIME } from '../utils/constants';
+import { DEFAULT_MESSAGE_DISPLAY_TIME, EMPTY_SPACE_MESSAGE, DEFAULT_COLOR, DEFAULT_EFFECT } from '../utils/constants';
+import { CalendarEventModel } from '../model/CalendarEvent';
 
 export let getMessage = (req: Request, res: Response) => {
   
-  const currentTime = Date.now();
-  Texter.find({ texts: { $elemMatch : { endTime: { $gt: currentTime } } } }).exec()
-      .catch((err) => {res.sendStatus(500); return;})
-      .then(texters => {
-        let currentMessages: TextModel[] = [];
+  const currentTime = new Date();
+  let recentTexters = Texter.find({ texts: { $elemMatch : { endTime: { $gt: currentTime.valueOf() } } } }).exec();
+  let calendarDay = CalendarDay.findOne({ date: startOfDay(currentTime).valueOf() }).exec();
 
-        if (texters) {
-          for (let i = 0; i < texters.length; i++) {
-            const texter = texters[i] as TexterModel;
-            for (let j = 0; j < texter.texts.length; j++) {
-              const text = texter.texts[j] as TextModel;
-              if (text.endTime > currentTime && !text.rejected) {
-                currentMessages.push(text);
+  Promise.all([recentTexters, calendarDay])
+      .catch(err => {res.sendStatus(500); return;})
+      .then(results => {
+        if (results) {
+          let currentMessages: (TextModel | CalendarEventModel)[] = [];
+
+          let texters: TexterModel[];
+          if (results.length > 0 && results[0]) {
+            texters = results[0] as TexterModel[];
+            for (let i = 0; i < texters.length; i++) {
+              const texter = texters[i];
+              for (let j = 0; j < texter.texts.length; j++) {
+                const text = texter.texts[j];
+                if (currentTime.valueOf() <= text.endTime && currentTime.valueOf() >= text.startTime && !text.rejected) {
+                  currentMessages.push(text);
+                }
               }
             }
           }
-
+  
+          let day: CalendarDayModel;
+          if (results.length > 1 && results[1]) {
+            day = results[1] as CalendarDayModel;
+            for (let i = 0; i < day.events.length; i++) {
+              const event = day.events[i];
+              if (currentTime.valueOf() <= event.endTime && currentTime.valueOf() >= event.startTime) {
+                currentMessages.push(event);
+              }
+            }
+          }
+  
           currentMessages.sort((a, b) => {
             if (a.lastDisplayed === null && b.lastDisplayed === null) {
               return a.startTime < b.startTime ? -1 : 1;
@@ -42,29 +63,55 @@ export let getMessage = (req: Request, res: Response) => {
             return a.lastDisplayed < b.lastDisplayed ? -1 : 1;
           });
 
-          const displayedMessage = currentMessages[0];
+          if (currentMessages.length > 0) {
+            const displayedMessage = currentMessages[0];
 
-          for (let i = 0; i < texters.length; i++) {
-            if (texters[i]._id == displayedMessage.texterId) {
-              const texter = texters[i] as TexterModel;
-              const index = texter.texts.indexOf(displayedMessage);
+            if (texters && (displayedMessage as TextModel).texterId) {
+              const text = displayedMessage as TextModel;
+              for (let i = 0; i < texters.length; i++) {
+                if (texters[i]._id == text.texterId) {
+                  const texter = texters[i] as TexterModel;
+                  const index = texter.texts.indexOf(text);
+                  if (index < 0) {
+                    res.sendStatus(500);
+                    return;
+                  }
+                  texter.texts[index].lastDisplayed = currentTime.valueOf();
+    
+                  texter.save((err, texter) => {
+                    if (err) {
+                      console.log(err);
+                      res.status(500).send(err);
+                    }
+                  });
+                }
+              }
+            } else if (day) {
+              const event = displayedMessage as CalendarEventModel;
+              const index = day.events.indexOf(event);
               if (index < 0) {
                 res.sendStatus(500);
+                return;
               }
-              texter.texts[index].lastDisplayed = currentTime;
 
-              texter.save((err, texter) => {
+              day.events[index].lastDisplayed = currentTime.valueOf();
+
+              day.save((err, day) => {
                 if (err) {
                   console.log(err);
                   res.status(500).send(err);
                 }
               });
             }
+
+            res.send({ body: displayedMessage.message,
+                color: displayedMessage.color,
+                effect: displayedMessage.effect });
+          } else {
+            res.send({ body: EMPTY_SPACE_MESSAGE, color: DEFAULT_COLOR, effect: DEFAULT_EFFECT });
           }
-          console.log(currentMessages);
-          res.send(displayedMessage);
         } else {
-          res.send({});
+          res.send({ body: EMPTY_SPACE_MESSAGE, color: DEFAULT_COLOR, effect: DEFAULT_EFFECT });
         }
       });
 }
@@ -141,7 +188,7 @@ export let postMessage = (req: Request, res: Response) => {
           }
 
           if (process.env.SEND_TEXTS === 'TRUE') {
-          sendTextMessage(phoneNumber, responses.getResponseFromId(responseId, replace));
+            sendTextMessage(phoneNumber, responses.getResponseFromId(responseId, replace));
           }
 
           text.responseId = responseId;

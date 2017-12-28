@@ -1,10 +1,12 @@
 import { DEFAULT_COLOR, DEFAULT_EFFECT } from '../utils/constants';
 
-export type Message = {
+type Message = {
   body: string,
   color: string,
   effect: string
 };
+
+export default Message;
 
 export function parseTextEffects(message: string):Message {
   const firstIndex = message.indexOf(':');
@@ -34,10 +36,8 @@ export function parseTextEffects(message: string):Message {
   return { body: message, color: DEFAULT_COLOR, effect: DEFAULT_EFFECT };
 }
 
-const textEffects = {
+export const textEffects = {
   colors: ['white', 'cyan', 'red', 'green', 'purple',
       'flash1', 'flash2', 'flash3', 'glow1', 'glow2', 'glow3'],
   effects: ['none', 'scroll', 'slide', 'wave', 'wave2', 'shake']
 };
-
-export default textEffects;
