@@ -18,6 +18,7 @@ tmp
 
 # API keys and secrets
 .env
+googleapi.json
 
 # Dependency directory
 node_modules
