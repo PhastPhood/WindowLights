@@ -99,7 +99,7 @@ public class TextWindows implements Program {
   }
   
   void doAsyncWork() {
-    GetRequest get = new GetRequest("https://" + env.get("SERVER_ADDRESS") + "/currentMessage");
+    GetRequest get = new GetRequest("https://" + env.get("SERVER_ADDRESS") + "/api/currentMessage");
     get.addUser(env.get("AUTH_USER"), env.get("AUTH_PASS"));
     get.send();
     JSONObject response = parseJSONObject(get.getContent());

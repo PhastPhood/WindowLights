@@ -43,7 +43,7 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
-app.get('/currentmessage', getMessage);
-app.post('/textmessage', postMessage);
+app.get('/api/currentmessage', getMessage);
+app.post('/api/textmessage', postMessage);
 
 module.exports = app;
