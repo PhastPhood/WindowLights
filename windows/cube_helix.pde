@@ -23,16 +23,15 @@ color getCubeHelixColor(color aRgb, color bRgb, color cRgb, float t) {
   HslColor a = new HslColor(aRgb);
   HslColor b = new HslColor(bRgb);
   HslColor c = new HslColor(cRgb);
-  a.h = -100;
-  a.s = 0.75;
-  a.l = 0.35;
-  b.h = 80;
-  b.s = 1.5;
-  b.l = 0.8;
-  c.h = 260;
-  c.s = 0.75;
-  c.l = 0.35;
   
+  if (t <= 0.5) {
+    return interpolateCubeHelix(1, t * 2, a, b);
+  } else {
+    return interpolateCubeHelix(1, (t - 0.5) * 2, b, c);
+  }
+}
+
+color getCubeHelixColor(HslColor a, HslColor b, HslColor c, float t) {
   if (t <= 0.5) {
     return interpolateCubeHelix(1, t * 2, a, b);
   } else {
@@ -52,10 +51,16 @@ class HslColor {
     l = brightness(c)/255;
     a = alpha(c)/255;
   }
+  
+  HslColor(float h, float s, float l, float a) {
+    this.h = h;
+    this.s = s;
+    this.l = l;
+    this.a = a;
+  }
 }
 
 color interpolateCubeHelix(float y, float t, HslColor a, HslColor b) {
-  
   float radians = PI/180;
   
   float ah = (a.h + 120) * radians;

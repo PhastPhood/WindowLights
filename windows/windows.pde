@@ -35,7 +35,7 @@ public void settings() {
 }
 
 public void setup() {
-  frameRate(15);
+  frameRate(16);
   
   System.err.println("**** Running setup()");
   registry = new DeviceRegistry();
