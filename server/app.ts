@@ -7,6 +7,7 @@ import { addDays } from 'date-fns';
 import * as cron from 'cron';
 import * as google from 'googleapis';
 import * as swearjar from 'swearjar';
+import * as path from 'path';
 
 import { getMessage, postMessage } from './controller/messageController';
 import { updateCalendarEvents, googleJwtClient } from './controller/calendarController';
@@ -43,7 +44,13 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
+app.use('/admin/', express.static(path.resolve(__dirname, '..', 'dist/admin/')));
+
 app.get('/api/currentmessage', getMessage);
 app.post('/api/textmessage', postMessage);
+
+app.get(['/admin', '/admin/*'], function (request, response) {
+  response.sendFile(path.resolve(__dirname, '..', 'dist/admin/', 'index.html'))
+});
 
 module.exports = app;
