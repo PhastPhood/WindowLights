@@ -41,7 +41,7 @@ const responses = {
     }
 
     if (this.emailResponses.hasOwnProperty(id)) {
-      return replace ? this.replacementMessage + this.emailResponses[id]
+      return replace ? this.replacementMessage + this.emailResponses[id] + process.env.EMAIL
           : this.messageReceivedMessage + this.emailResponses[id] + process.env.EMAIL;
     } else {
       return this.errorMessage;

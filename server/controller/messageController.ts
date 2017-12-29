@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { startOfDay } from 'date-fns';
 import * as swearjar from 'swearjar';
+import * as twilio from 'twilio';
 
 import { default as CalendarDay, CalendarDayModel } from '../model/CalendarDay';
 import { default as Text, TextModel } from '../model/Text';
@@ -199,10 +200,6 @@ export let postMessage = (req: Request, res: Response) => {
             responseId = filteredResponses[Math.floor(filteredResponses.length * Math.random())];
           }
 
-          if (process.env.SEND_TEXTS === 'TRUE') {
-            sendTextMessage(phoneNumber, responses.getResponseFromId(responseId, replace));
-          }
-
           if (process.env.SEND_ADMIN_TEXTS === 'TRUE') {
             notifyAdmin(phoneNumber + ': ' + message);
           }
@@ -220,7 +217,14 @@ export let postMessage = (req: Request, res: Response) => {
               console.log(err);
               res.status(500).send(err);
             }
-            res.status(200).send(texter);
+            res.set('Content-Type', 'text/xml');
+            const response = new twilio.twiml.MessagingResponse();
+            console.log(responses.getResponseFromId(responseId, replace));
+            if (process.env.SEND_TEXTS === 'TRUE') {
+              const message = response.message();
+              message.body(responses.getResponseFromId(responseId, replace));
+            }
+            res.status(200).send(response.toString());
           });
         }
       );
