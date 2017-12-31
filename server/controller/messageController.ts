@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { startOfDay } from 'date-fns';
 import * as swearjar from 'swearjar';
 import * as twilio from 'twilio';
+import { assign } from 'lodash';
+import { Document, Types } from 'mongoose';
 
 import { default as CalendarDay, CalendarDayModel } from '../model/CalendarDay';
 import { default as Text, TextModel } from '../model/Text';
@@ -13,14 +15,13 @@ import responses from '../model/responses';
 import { DEFAULT_MESSAGE_DISPLAY_TIME, EMPTY_SPACE_MESSAGE, DEFAULT_COLOR, DEFAULT_EFFECT } from '../utils/constants';
 import { CalendarEventModel } from '../model/CalendarEvent';
 
-export let getMessage = (req: Request, res: Response) => {
+export const getCurrentMessage = (req: Request, res: Response) => {
   
   const currentTime = new Date();
   let recentTexters = Texter.find({ texts: { $elemMatch : { endTime: { $gt: currentTime.valueOf() } } } }).exec();
   let calendarDay = CalendarDay.findOne({ date: startOfDay(currentTime).valueOf() }).exec();
 
   Promise.all([recentTexters, calendarDay])
-      .catch(err => {res.sendStatus(500); return;})
       .then(results => {
         if (results) {
           let currentMessages: (TextModel | CalendarEventModel)[] = [];
@@ -66,27 +67,25 @@ export let getMessage = (req: Request, res: Response) => {
             return a.lastDisplayed < b.lastDisplayed ? -1 : 1;
           });
 
+          let document: Document;
           if (currentMessages.length > 0) {
             const displayedMessage = currentMessages[0];
 
             if (texters && (displayedMessage as TextModel).texterId) {
               const text = displayedMessage as TextModel;
               for (let i = 0; i < texters.length; i++) {
-                if (texters[i]._id == text.texterId) {
+                console.log(text.texterId + ', ' + texters[i]._id);
+                if (texters[i]._id.equals(text.texterId)) {
                   const texter = texters[i] as TexterModel;
                   const index = texter.texts.indexOf(text);
                   if (index < 0) {
                     res.sendStatus(500);
-                    return;
+                    return Promise.reject('Couldn\'t find text');
                   }
                   texter.texts[index].lastDisplayed = currentTime.valueOf();
     
-                  texter.save((err, texter) => {
-                    if (err) {
-                      console.log(err);
-                      res.status(500).send(err);
-                    }
-                  });
+                  res.send({ body: text.message, color: text.color, effect: text.effect });
+                  document = texter;
                 }
               }
             } else if (day) {
@@ -94,32 +93,26 @@ export let getMessage = (req: Request, res: Response) => {
               const index = day.events.indexOf(event);
               if (index < 0) {
                 res.sendStatus(500);
-                return;
+                return Promise.reject('Couldn\'t find event');
               }
 
               day.events[index].lastDisplayed = currentTime.valueOf();
 
-              day.save((err, day) => {
-                if (err) {
-                  console.log(err);
-                  res.status(500).send(err);
-                }
-              });
+              res.send({ body: event.message, color: event.color, effect: event.effect });
+              document = day;
             }
-
-            res.send({ body: displayedMessage.message,
-                color: displayedMessage.color,
-                effect: displayedMessage.effect });
+            return document.save();
           } else {
             res.send({ body: EMPTY_SPACE_MESSAGE, color: DEFAULT_COLOR, effect: DEFAULT_EFFECT });
           }
         } else {
           res.send({ body: EMPTY_SPACE_MESSAGE, color: DEFAULT_COLOR, effect: DEFAULT_EFFECT });
         }
-      });
+      })
+      .catch(err => res.sendStatus(500));
 }
 
-export let postMessage = (req: Request, res: Response) => {
+export const postIncomingText = (req: Request, res: Response) => {
   console.log(req.body);
   const currentTime = Date.now();
 
@@ -140,7 +133,6 @@ export let postMessage = (req: Request, res: Response) => {
   const phoneNumber = req.body.From.trim();
 
   Texter.findOne({ phoneNumber: phoneNumber }).exec()
-      .catch((err) => {res.sendStatus(500); return;})
       .then(
         (texter: TexterModel) => {
           if (!texter) {  
@@ -148,7 +140,9 @@ export let postMessage = (req: Request, res: Response) => {
               phoneNumber: phoneNumber,
               city: req.body.City || '',
               state: req.body.State || '',
-              texts: []
+              texts: [],
+              banned: false,
+              tag: ''
             }) as TexterModel;
           }
 
@@ -209,13 +203,13 @@ export let postMessage = (req: Request, res: Response) => {
             text.endTime = currentTime + DEFAULT_MESSAGE_DISPLAY_TIME * 1000;
           }
           text.rejected = rejected;
-          text.texterId = texter.id;
+          text.texterId = texter._id;
 
           texter.texts.push(text);
-          texter.save((err, texter) => {
+          return texter.save((err, texter) => {
             if (err) {
-              console.log(err);
               res.status(500).send(err);
+              return Promise.reject('Couldn\'t find text');
             }
             res.set('Content-Type', 'text/xml');
             const response = new twilio.twiml.MessagingResponse();
@@ -227,5 +221,71 @@ export let postMessage = (req: Request, res: Response) => {
             res.status(200).send(response.toString());
           });
         }
-      );
+      )
+      .catch(err => res.sendStatus(500));
 };
+
+export const postText = (req: Request, res: Response) => {
+  Texter.findOne({'texts._id': Types.ObjectId(req.params.textId)}).exec()
+    .then((texter: TexterModel) => {
+      if (!texter) {
+        return Promise.reject('Text not found');
+      }
+      for (let i = 0; i < texter.texts.length; i++) {
+        assign(texter.texts[i], req.body);
+      }
+      return texter.save();
+    })
+    .then(() => res.sendStatus(200))
+    .catch(err => res.sendStatus(404));
+}
+
+export const getTexts = (req: Request, res: Response) => {
+  Texter.find({}).exec()
+    .then((texters: TexterModel[]) => {
+      if (!texters) {
+        return Promise.reject('Texts not found');
+      }
+
+      let texts: TextModel[] = [];
+      for (let i = 0; i < texters.length; i++) {
+        texts.push.apply(texts, texters[i].texts);
+      }
+      return Promise.resolve(texts);
+    })
+    .then((texts: TextModel[]) => res.status(200).send(texts))
+    .catch(err => res.sendStatus(500));
+}
+
+export const postTexter = (req: Request, res: Response) => {
+  Texter.findByIdAndUpdate(req.params.texterId, req.body).exec()
+    .then((texter: TexterModel) => {
+      if (!texter) {
+        return Promise.reject('Texter not found');
+      }
+    })
+    .then(() => res.sendStatus(200))
+    .catch(err => res.sendStatus(404));
+}
+
+export const getTexters = (req: Request, res: Response) => {
+  Texter.find({}).exec()
+    .then((texters: TexterModel[]) => {
+      if (!texters) {
+        return Promise.reject('Texters not found');
+      }
+      
+      return Promise.resolve(texters.map(texter =>
+        {
+          return {
+            id: texter.id,
+            city: texter.city,
+            state: texter.state,
+            phoneNumber: texter.phoneNumber,
+            textIds: texter.texts.map(text => text.id)
+          };
+        }));
+    })
+    .then(texters => res.status(200).send(texters))
+    .catch(err => res.sendStatus(500));
+}

@@ -38,6 +38,6 @@ export function parseTextEffects(message: string):Message {
 
 export const textEffects = {
   colors: ['white', 'cyan', 'red', 'green', 'purple', 'yellow',
-      'flash1', 'flash2', 'flash3', 'glow1', 'glow2', 'glow3'],
+    'flash1', 'flash2', 'flash3', 'glow1', 'glow2', 'glow3'],
   effects: ['none', 'wave', 'wave2', 'shake']
 };

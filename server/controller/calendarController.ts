@@ -23,7 +23,7 @@ googleJwtClient.authorize(function (err, tokens) {
   }
 });
 
-export let updateCalendarEvents = function(date: Date) {
+export const updateCalendarEvents = function(date: Date) {
   let fetchCalendarEventsPromise = new Promise((resolve, reject) => {
     let calendar = google.calendar('v3');
     calendar.events.list({

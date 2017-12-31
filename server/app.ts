@@ -9,7 +9,12 @@ import * as google from 'googleapis';
 import * as swearjar from 'swearjar';
 import * as path from 'path';
 
-import { getMessage, postMessage } from './controller/messageController';
+import { getCurrentMessage,
+  postIncomingText,
+  postText,
+  getTexts,
+  postTexter,
+  getTexters } from './controller/messageController';
 import { updateCalendarEvents, googleJwtClient } from './controller/calendarController';
 import { parseTextEffects } from './model/Message';
 
@@ -46,8 +51,14 @@ app.use(bodyParser.urlencoded({
 
 app.use('/admin/', express.static(path.resolve(__dirname, '..', 'dist/admin/')));
 
-app.get('/api/currentmessage', getMessage);
-app.post('/api/textmessage', postMessage);
+app.get('/api/currentmessage', getCurrentMessage);
+app.post('/api/incomingtext', postIncomingText);
+
+app.post('/api/text/:textId', postText);
+app.get('/api/texts', getTexts);
+
+app.post('/api/texter/:texterId', postTexter);
+app.get('/api/texters', getTexters);
 
 app.get(['/admin', '/admin/*'], function (request, response) {
   response.sendFile(path.resolve(__dirname, '..', 'dist/admin/', 'index.html'))

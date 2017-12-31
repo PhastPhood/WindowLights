@@ -2,7 +2,7 @@ import * as mongoose from 'mongoose';
 import { DEFAULT_MESSAGE_DISPLAY_TIME, DEFAULT_COLOR, DEFAULT_EFFECT } from '../utils/constants'
 
 export type TextModel = mongoose.Document & {
-  texterId: string,
+  texterId: any,
   unparsedMessage: string,
   message: string,
   color: string,
@@ -17,7 +17,7 @@ export type TextModel = mongoose.Document & {
 };
 
 export const textSchema = new mongoose.Schema({
-  texterId: String,
+  texterId: { type: mongoose.SchemaTypes.ObjectId, ref: 'Texter' },
   unparsedMessage: String,
   message: String,
   color: { type: String, default: DEFAULT_COLOR },

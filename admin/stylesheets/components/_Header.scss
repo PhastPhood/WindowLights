@@ -1,0 +1,11 @@
+.Header {
+  background: $color-accent-background;
+  color: $color-accent-text;
+  display: flex;
+  flex-direction: row;
+}
+
+.Header__Title {
+  font-size: 24px;
+  margin: 24px 0 24px 48px; 
+}
