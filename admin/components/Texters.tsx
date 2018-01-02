@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import { Texter } from '../redux/model';
 import { fetchTexters, changeBanTexter } from '../redux/reducer';
 import SwitchField from './SwitchField';
+import PhoneNumberField from './PhoneNumberField';
 
 interface TextersStateProps {
   texters: Texter[];
@@ -20,6 +21,7 @@ class Texters extends React.Component<TextersStateProps & TextersDispatchProps, 
     const columns = [{
       Header: 'Number',
       accessor: 'phoneNumber',
+      Cell: row => <PhoneNumberField phoneNumber={ row.value } displayName={ row.original.displayName }/>,
       width: 150
     }, {
       Header: 'Tag',

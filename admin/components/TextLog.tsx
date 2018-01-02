@@ -23,7 +23,7 @@ class TextLog extends React.Component<TextLogStateProps & TextLogDispatchProps, 
     const columns = [{
       Header: 'Number',
       accessor: 'phoneNumber',
-      Cell: row => <PhoneNumberField phoneNumber={ row.value }/>,
+      Cell: row => <PhoneNumberField phoneNumber={ row.value } displayName={ row.original.displayName }/>,
       width: 150
     }, {
       Header: 'Message',

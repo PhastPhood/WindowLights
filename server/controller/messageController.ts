@@ -14,6 +14,7 @@ import sendTextMessage from '../utils/sendTextMessage';
 import responses from '../model/responses';
 import { DEFAULT_MESSAGE_DISPLAY_TIME, EMPTY_SPACE_MESSAGE, DEFAULT_COLOR, DEFAULT_EFFECT } from '../utils/constants';
 import { CalendarEventModel } from '../model/CalendarEvent';
+import { default as contacts, contactNumbers } from '../model/contacts';
 
 export const getCurrentMessage = (req: Request, res: Response) => {
   
@@ -147,6 +148,9 @@ export const postIncomingText = (req: Request, res: Response) => {
         let responseId = '';
         let rejected = true;
         let replace = false;
+        let firstName = '';
+        let lastName = '';
+        let personalizedMessage = '';
         if (texter.banned) {
           responseId = responses.bannedId;
           rejected = true;
@@ -182,18 +186,30 @@ export const postIncomingText = (req: Request, res: Response) => {
               replace = true;
             }
           });
-
-          let minResponse = Number.MAX_SAFE_INTEGER;
-          const responseCountKeys = Object.keys(responseCounts);
-          responseCountKeys.forEach(response => {
-            if (responseCounts[response] < minResponse) {
-              minResponse = responseCounts[response];
-            }
-          });
-
-          let filteredResponses = responseCountKeys.filter(
-              response => responseCounts[response] == minResponse);
-          responseId = filteredResponses[Math.floor(filteredResponses.length * Math.random())];
+          
+          if ((!responseCounts[responses.personalMessageId] || responseCounts[responses.personalMessageId] === 0)
+              && contactNumbers.indexOf(texter.phoneNumber) !== -1) {
+            // send a personalized message if in contacts and a personalized message hasn't been sent already
+            responseId = responses.personalMessageId;
+            const contact = contacts.filter(contact => phoneNumber === contact.phoneNumber)[0];
+            firstName = contact.firstName;
+            lastName = contact.lastName;
+            personalizedMessage = contact.personalizedMessage;
+            texter.displayName = firstName + ' ' + lastName;
+          } else {
+            // else send a random message
+            let minResponse = Number.MAX_SAFE_INTEGER;
+            const responseCountKeys = Object.keys(responseCounts);
+            responseCountKeys.forEach(response => {
+              if (responseCounts[response] < minResponse) {
+                minResponse = responseCounts[response];
+              }
+            });
+  
+            let filteredResponses = responseCountKeys.filter(
+                response => responseCounts[response] == minResponse);
+            responseId = filteredResponses[Math.floor(filteredResponses.length * Math.random())];
+          }
         }
 
         text.responseId = responseId;
@@ -213,7 +229,7 @@ export const postIncomingText = (req: Request, res: Response) => {
           const response = new twilio.twiml.MessagingResponse();
           if (process.env.SEND_TEXTS === 'TRUE') {
             const message = response.message();
-            message.body(responses.getResponseFromId(responseId, replace));
+            message.body(responses.getResponseFromId(responseId, replace, firstName, personalizedMessage));
           }
           res.status(200).send(response.toString());
         }), incomingText: text, phoneNumber: texter.phoneNumber };
@@ -227,7 +243,7 @@ export const postIncomingText = (req: Request, res: Response) => {
     .catch(err => res.sendStatus(500));
 };
 
-function getTextObject(text: TextModel, phoneNumber: string) {
+function getTextObject(text: TextModel, phoneNumber: string, displayName: string) {
   return {
     id: text.id,
     texterId: text.texterId,
@@ -237,6 +253,7 @@ function getTextObject(text: TextModel, phoneNumber: string) {
     message: text.message,
     rejected: text.rejected,
     phoneNumber: phoneNumber,
+    displayName: displayName,
     lastDisplayed: text.lastDisplayed,
     effect: text.effect,
     color: text.color
@@ -254,7 +271,7 @@ export const getTexts = (req: Request, res: Response) => {
       for (let i = 0; i < texters.length; i++) {
         let texterTexts = texters[i].texts;
         for (let j = 0; j < texterTexts.length; j++) {
-          texts.push(getTextObject(texterTexts[j], texters[i].phoneNumber));
+          texts.push(getTextObject(texterTexts[j], texters[i].phoneNumber, texters[i].displayName));
         } 
       }
       return Promise.resolve(texts);
@@ -298,7 +315,7 @@ export const postText = (req: Request, res: Response) => {
           assign(modifiedText, req.body, { endTime: newEndTime });
         }
       }
-      return {...texter.save(), modifiedText: getTextObject(modifiedText, texter.phoneNumber)};
+      return {...texter.save(), modifiedText: getTextObject(modifiedText, texter.phoneNumber, texter.displayName)};
     })
     .then(texter => res.status(200).send((<any>texter).modifiedText))
     .catch(err => res.sendStatus(404));
@@ -310,6 +327,7 @@ function getTexterObject(texter: TexterModel) {
     city: texter.city,
     banned: texter.banned,
     state: texter.state,
+    displayName: texter.displayName,
     phoneNumber: texter.phoneNumber,
     textIds: texter.texts.map(text => text.id)
   };

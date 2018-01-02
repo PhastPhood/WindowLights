@@ -12,6 +12,12 @@ const responses = {
   bannedMessage: 'Somehow you\'ve managed to get banned from putting messages up on my window. Good job, and please don\'t send any more.',
   bannedId: 'banned',
 
+  personalMessage(firstName, personalizedMessage) {
+    return `Hey ${firstName.trim()}! Thanks for adding your message. ${personalizedMessage.trim()} [This is an automated personal message cuz you're in my contacts. You'll get the normal responses after this one. Don't reply to this number unless you want to update your message on the window.]`;
+  },
+
+  personalMessageId: 'personal',
+
   emailResponses: {
     bolognese: 'I\'m looking for quality Bolognese and gumbo recipes. If you have one, email me at ',
     lactose: 'I\'m lactose intolerant and always forget to bring Lactaid. If you know any solutions, please email me at ',
@@ -28,7 +34,7 @@ const responses = {
   replacementMessage: 'Your last message will be replaced. ',
   errorMessage: 'There was an error processing your message.',
 
-  getResponseFromId(id: string, replace: boolean):string {
+  getResponseFromId(id: string, replace: boolean, ...additionalArgs):string {
     if (id === this.tooLongId) {
       return this.tooLongMessage;
     }
@@ -43,6 +49,10 @@ const responses = {
 
     if (id === this.bannedId) {
       return this.bannedMessage;
+    }
+
+    if (id === this.personalMessageId) {
+      return this.personalMessage(additionalArgs[0], additionalArgs[1]);
     }
 
     if (this.emailResponses.hasOwnProperty(id)) {

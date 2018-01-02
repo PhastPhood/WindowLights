@@ -6,6 +6,7 @@ export type TexterModel = mongoose.Document & {
 
   city: string,
   state: string,
+  displayName: string,
 
   banned: boolean,
   tag: string,
@@ -20,6 +21,7 @@ const texterSchema = new mongoose.Schema({
   
   city: String,
   state: String,
+  displayName: String,
 
   banned: Boolean,
   tag: String,

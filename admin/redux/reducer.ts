@@ -123,7 +123,7 @@ export const changeBanTexter = (texter: Texter, ban: boolean) => dispatch => {
 export const fetchTexters = () => dispatch => {
   axios.get('/api/texters')
     .then(response => response.data)
-    .then(texters => dispatch(fetchTextersAction(texters)))
+    .then(texters => { console.log(texters); return dispatch(fetchTextersAction(texters))})
     .catch(err => {
       console.error.bind(err);
     });
