@@ -1,0 +1,37 @@
+.switch {
+  border: 2px solid $color-accent-background;
+  border-radius: 3px;
+  cursor: pointer;
+  display: inline-block;
+  width: 48px;
+  height: 19px;
+  transition: left .2s ease-in-out;
+}
+
+.switch.on {
+  border: 2px solid $color-bad;
+  .switch-toggle {
+    background: $color-bad;
+    left: 21px;
+  }
+}
+
+.switch-toggle {
+  background: $color-accent-background;
+  border-radius: 3px;
+  position: relative;
+  left: 1px;
+  top: 1px;
+  width: 22px;
+  height: 13px;
+  transition: left .2s ease-in-out;
+}
+
+.Switch__Label {
+  padding-left: 6px;
+  vertical-align: top;
+}
+
+.Switch__Label--Switched {
+  color: $color-bad;
+}

@@ -61,7 +61,7 @@ app.post('/api/texter/:texterId', postTexter);
 app.get('/api/texters', getTexters);
 
 app.get(['/admin', '/admin/*'], function (request, response) {
-  response.sendFile(path.resolve(__dirname, '..', 'dist/admin/', 'index.html'))
+  response.sendFile(path.resolve(__dirname, '..', 'dist/admin/', 'index.html'));
 });
 
 module.exports = app;

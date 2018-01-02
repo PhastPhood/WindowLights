@@ -29,11 +29,10 @@ const textsStateReducer = handleActions<TextsState, Text | Text[]>({
   },
 
   [CHANGE_REJECT_TEXT]: (state: TextsState, action: Action<Text>): TextsState => {
-    return <TextsState>state.map(text => 
-      text.id === action.payload.id ?
-        { ...text, rejected: action.payload.rejected }
-        : text
-    );
+    let newState = <TextsState>state.map(text => text.id === action.payload.id ?
+      { ...text, rejected: action.payload.rejected }
+      : text);
+    return newState;
   },
 
   [FETCH_TEXTS]: (state: TextsState, action: Action<Text[]>): TextsState => {
@@ -45,15 +44,14 @@ const textersStateReducer = handleActions<TextersState, Texter | Texter[]>({
   [CHANGE_TAG_TEXTER]: (state: TextersState, action: Action<Texter>): TextersState => {
     return <TextersState>state.map(texter => 
       texter.id === action.payload.id ?
-        { ...texter, message: action.payload.tag }
+        { ...texter, tag: action.payload.tag }
         : texter
     );
   },
 
   [CHANGE_BAN_TEXTER]: (state: TextersState, action: Action<Texter>): TextersState => {
-    return <TextersState>state.map(texter => 
-      texter.id === action.payload.id ?
-        { ...texter, rejected: action.payload.banned }
+    return <TextersState>state.map(texter =>  texter.id === action.payload.id ?
+        { ...texter, banned: action.payload.banned }
         : texter
     );
   },
@@ -63,7 +61,7 @@ const textersStateReducer = handleActions<TextersState, Texter | Texter[]>({
   }
 }, initialTextersState);
 
-const reducer = combineReducers({ textsStateReducer, textersStateReducer });
+const reducer = combineReducers({ texts: textsStateReducer, texters: textersStateReducer });
 
 export default reducer;
 
@@ -106,7 +104,12 @@ export const changeTagTexter = (texter: Texter, tag: string) => dispatch => {
 export const changeBanTexter = (texter: Texter, ban: boolean) => dispatch => {
   axios.post(`/api/texter/${texter.id}`, { ...texter, banned: ban })
     .then(response => response.data)
-    .then(texter => dispatch(changeRejectTextAction(texter, ban)))
+    .then(texter => {
+      dispatch(changeBanTexterAction(texter, ban));
+      return axios.get('/api/texts');
+    })
+    .then(response => response.data)
+    .then(texts => dispatch(fetchTextsAction(texts)))
     .catch(err => {
       console.error.bind(err);
     });

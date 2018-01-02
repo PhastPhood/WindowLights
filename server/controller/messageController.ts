@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { startOfDay } from 'date-fns';
+import { startOfDay, addHours } from 'date-fns';
 import * as swearjar from 'swearjar';
 import * as twilio from 'twilio';
 import { assign } from 'lodash';
@@ -74,7 +74,6 @@ export const getCurrentMessage = (req: Request, res: Response) => {
             if (texters && (displayedMessage as TextModel).texterId) {
               const text = displayedMessage as TextModel;
               for (let i = 0; i < texters.length; i++) {
-                console.log(text.texterId + ', ' + texters[i]._id);
                 if (texters[i]._id.equals(text.texterId)) {
                   const texter = texters[i] as TexterModel;
                   const index = texter.texts.indexOf(text);
@@ -113,7 +112,6 @@ export const getCurrentMessage = (req: Request, res: Response) => {
 }
 
 export const postIncomingText = (req: Request, res: Response) => {
-  console.log(req.body);
   const currentTime = Date.now();
 
   const parsedMessage = parseTextEffects(req.body.Body);
@@ -149,7 +147,11 @@ export const postIncomingText = (req: Request, res: Response) => {
           let responseId = '';
           let rejected = true;
           let replace = false;
-          if (message.length >= 160) {
+          if (texter.banned) {
+            responseId = responses.bannedId;
+            rejected = true;
+            replace = false;
+          } else if (message.length >= 160) {
             // check length of message
             responseId = responses.tooLongId;
             rejected = true;
@@ -213,7 +215,6 @@ export const postIncomingText = (req: Request, res: Response) => {
             }
             res.set('Content-Type', 'text/xml');
             const response = new twilio.twiml.MessagingResponse();
-            console.log(responses.getResponseFromId(responseId, replace));
             if (process.env.SEND_TEXTS === 'TRUE') {
               const message = response.message();
               message.body(responses.getResponseFromId(responseId, replace));
@@ -225,19 +226,20 @@ export const postIncomingText = (req: Request, res: Response) => {
       .catch(err => res.sendStatus(500));
 };
 
-export const postText = (req: Request, res: Response) => {
-  Texter.findOne({'texts._id': Types.ObjectId(req.params.textId)}).exec()
-    .then((texter: TexterModel) => {
-      if (!texter) {
-        return Promise.reject('Text not found');
-      }
-      for (let i = 0; i < texter.texts.length; i++) {
-        assign(texter.texts[i], req.body);
-      }
-      return texter.save();
-    })
-    .then(() => res.sendStatus(200))
-    .catch(err => res.sendStatus(404));
+function getTextObject(text: TextModel, phoneNumber: string) {
+  return {
+    id: text.id,
+    texterId: text.texterId,
+    responseId: text.responseId,
+    startTime: text.startTime,
+    endTime: text.endTime,
+    message: text.message,
+    rejected: text.rejected,
+    phoneNumber: phoneNumber,
+    lastDisplayed: text.lastDisplayed,
+    effect: text.effect,
+    color: text.color
+  };
 }
 
 export const getTexts = (req: Request, res: Response) => {
@@ -247,9 +249,12 @@ export const getTexts = (req: Request, res: Response) => {
         return Promise.reject('Texts not found');
       }
 
-      let texts: TextModel[] = [];
+      let texts = [];
       for (let i = 0; i < texters.length; i++) {
-        texts.push.apply(texts, texters[i].texts);
+        let texterTexts = texters[i].texts;
+        for (let j = 0; j < texterTexts.length; j++) {
+          texts.push(getTextObject(texterTexts[j], texters[i].phoneNumber));
+        } 
       }
       return Promise.resolve(texts);
     })
@@ -257,14 +262,68 @@ export const getTexts = (req: Request, res: Response) => {
     .catch(err => res.sendStatus(500));
 }
 
+export const postText = (req: Request, res: Response) => {
+  Texter.findOne({'texts._id': Types.ObjectId(req.params.textId)}).exec()
+    .then((texter: TexterModel) => {
+      if (!texter) {
+        return Promise.reject('Text not found');
+      }
+      let modifiedText;
+      for (let i = 0; i < texter.texts.length; i++) {
+        if (texter.texts[i].id === req.body.id) {
+          modifiedText = texter.texts[i];
+          let newEndTime = modifiedText.endTime;
+          if (req.body.rejected && !modifiedText.rejected) {
+            const currentTime = Date.now();
+            if (currentTime < modifiedText.endTime) {
+              newEndTime = currentTime;
+            }
+          } else if (!req.body.rejected && modifiedText.rejected) {
+            const currentTime = new Date();
+            const hourFromStartTime = addHours(modifiedText.startTime, 1);
+            if (currentTime < hourFromStartTime) {
+              newEndTime = hourFromStartTime;
+            }
+          }
+          assign(modifiedText, req.body, { endTime: newEndTime });
+        }
+      }
+      return {...texter.save(), modifiedText: getTextObject(modifiedText, texter.phoneNumber)};
+    })
+    .then(texter => res.status(200).send((<any>texter).modifiedText))
+    .catch(err => res.sendStatus(404));
+}
+
+function getTexterObject(texter: TexterModel) {
+  return {
+    id: texter.id,
+    city: texter.city,
+    banned: texter.banned,
+    state: texter.state,
+    phoneNumber: texter.phoneNumber,
+    textIds: texter.texts.map(text => text.id)
+  };
+}
+
 export const postTexter = (req: Request, res: Response) => {
-  Texter.findByIdAndUpdate(req.params.texterId, req.body).exec()
+  Texter.findById(req.params.texterId).exec()
     .then((texter: TexterModel) => {
       if (!texter) {
         return Promise.reject('Texter not found');
       }
+      if (req.body.banned && !texter.banned) {
+        for (let i = 0; i < texter.texts.length; i++) {
+          const currentTime = Date.now();
+          if (currentTime < texter.texts[i].endTime) {
+            texter.texts[i].endTime = currentTime;
+            texter.texts[i].rejected = true;
+          }
+        }
+      }
+      assign(texter, req.body);
+      return texter.save();
     })
-    .then(() => res.sendStatus(200))
+    .then((texter) => res.status(200).send(getTexterObject(texter)))
     .catch(err => res.sendStatus(404));
 }
 
@@ -275,16 +334,7 @@ export const getTexters = (req: Request, res: Response) => {
         return Promise.reject('Texters not found');
       }
       
-      return Promise.resolve(texters.map(texter =>
-        {
-          return {
-            id: texter.id,
-            city: texter.city,
-            state: texter.state,
-            phoneNumber: texter.phoneNumber,
-            textIds: texter.texts.map(text => text.id)
-          };
-        }));
+      return Promise.resolve(texters.map(texter => getTexterObject(texter)));
     })
     .then(texters => res.status(200).send(texters))
     .catch(err => res.sendStatus(500));

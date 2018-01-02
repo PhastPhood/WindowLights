@@ -9,6 +9,9 @@ const responses = {
   starWarsMessage: 'Please no Star Wars spoilers!',
   starWarsId: 'starWars',
 
+  bannedMessage: 'Somehow you\'ve managed to get banned from putting messages up on my window. Good job, and please don\'t send any more.',
+  bannedId: 'banned',
+
   emailResponses: {
     bolognese: 'I\'m looking for a quality Bolognese recipe. If you have one, email me at ',
     clothing: 'I\'m convinced 0 people in Seattle own colorful clothing. If you have evidence to the contrary, mail to ',
@@ -38,6 +41,10 @@ const responses = {
 
     if (id === this.starWarsId) {
       return this.starWarsMessage;
+    }
+
+    if (id === this.bannedId) {
+      return this.bannedMessage;
     }
 
     if (this.emailResponses.hasOwnProperty(id)) {
