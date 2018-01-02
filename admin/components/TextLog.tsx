@@ -5,8 +5,9 @@ import { distanceInWordsToNow, format, isBefore } from 'date-fns';
 import { capitalize } from 'lodash';
 
 import { Text } from '../redux/model';
-import { fetchTexts, changeRejectText } from '../redux/reducer';
+import { fetchTexts, changeRejectText, changeTextMessage } from '../redux/reducer';
 import SwitchField from './SwitchField';
+import InputTextField from './InputTextField';
 import PhoneNumberField from './PhoneNumberField';
 
 interface TextLogStateProps {
@@ -16,6 +17,7 @@ interface TextLogStateProps {
 interface TextLogDispatchProps {
   fetchTexts: () => void;
   changeRejectText: (text, reject) => void;
+  changeTextMessage: (text, newMessage) => void;
 }
 
 class TextLog extends React.Component<TextLogStateProps & TextLogDispatchProps, any> {
@@ -31,7 +33,10 @@ class TextLog extends React.Component<TextLogStateProps & TextLogDispatchProps, 
       Cell: row => {
         const currentTime = Date.now();
         const isRunning = isBefore(currentTime, row.original.endTime);
-        return <span className={ isRunning ? 'TextLog__MessageField--Running' : '' }>{ row.value }</span>
+        return <InputTextField
+            className={ isRunning ? 'TextLog__MessageField--Running' : '' }
+            value={ row.value }
+            dispatchFunction={ newMessage => this.props.changeTextMessage(row.original, newMessage) }/>
       }
     }, {
       Header: 'Rejected',
@@ -85,6 +90,7 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps: TextLogDispatchProps = {
   fetchTexts: fetchTexts,
-  changeRejectText: changeRejectText };
+  changeRejectText: changeRejectText,
+  changeTextMessage: changeTextMessage };
 
 export default connect(mapStateToProps, mapDispatchToProps)(TextLog);

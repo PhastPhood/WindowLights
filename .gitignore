@@ -23,6 +23,7 @@ googleapi.json
 # Dependency directory
 node_modules
 bower_components
+server/data
 
 # Editors
 .idea

@@ -3,8 +3,9 @@ import ReactTable from 'react-table';
 import { connect } from 'react-redux';
 
 import { Texter } from '../redux/model';
-import { fetchTexters, changeBanTexter } from '../redux/reducer';
+import { fetchTexters, changeBanTexter, changeTagTexter } from '../redux/reducer';
 import SwitchField from './SwitchField';
+import InputTextField from './InputTextField';
 import PhoneNumberField from './PhoneNumberField';
 
 interface TextersStateProps {
@@ -14,6 +15,7 @@ interface TextersStateProps {
 interface TextersDispatchProps {
   fetchTexters: () => void;
   changeBanTexter: (texter, ban) => void;
+  changeTagTexter: (texter, tag) => void;
 }
 
 class Texters extends React.Component<TextersStateProps & TextersDispatchProps, any> {
@@ -25,7 +27,10 @@ class Texters extends React.Component<TextersStateProps & TextersDispatchProps, 
       width: 150
     }, {
       Header: 'Tag',
-      accessor: 'tag'
+      accessor: 'tag',
+      Cell: row => <InputTextField
+        value={ row.value }
+        dispatchFunction={ newTag => this.props.changeTagTexter(row.original, newTag) }/>
     }, {
       Header: 'Banned',
       id: 'banned',
@@ -34,7 +39,7 @@ class Texters extends React.Component<TextersStateProps & TextersDispatchProps, 
         switch={ row.original.banned }
         switchOffText="Not banned"
         switchOnText="Banned!" 
-      dispatchFunction={ newState => this.props.changeBanTexter(row.original, newState) }/>,
+        dispatchFunction={ newState => this.props.changeBanTexter(row.original, newState) }/>,
       maxWidth: 150
     }, {
       Header: 'Number of texts',
@@ -62,7 +67,8 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps: TextersDispatchProps = {
   fetchTexters: fetchTexters,
-  changeBanTexter: changeBanTexter };
+  changeBanTexter: changeBanTexter,
+  changeTagTexter: changeTagTexter };
 
 
 export default connect(mapStateToProps, mapDispatchToProps)(Texters);
