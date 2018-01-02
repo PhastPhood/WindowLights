@@ -4,8 +4,9 @@
   cursor: pointer;
   display: inline-block;
   width: 48px;
-  height: 19px;
+  height: 17px;
   transition: left .2s ease-in-out;
+  margin: 0 auto;
 }
 
 .switch.on {
@@ -23,8 +24,15 @@
   left: 1px;
   top: 1px;
   width: 22px;
-  height: 13px;
+  height: 11px;
   transition: left .2s ease-in-out;
+}
+
+@media only screen 
+    and (max-width: 800px) {
+  .Switch__Label {
+    display: none;
+  }
 }
 
 .Switch__Label {

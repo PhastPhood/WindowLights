@@ -20,7 +20,7 @@ class Texters extends React.Component<TextersStateProps & TextersDispatchProps, 
     const columns = [{
       Header: 'Number',
       accessor: 'phoneNumber',
-      maxWidth: 175
+      width: 150
     }, {
       Header: 'Tag',
       accessor: 'tag'
@@ -33,11 +33,11 @@ class Texters extends React.Component<TextersStateProps & TextersDispatchProps, 
         switchOffText="Not banned"
         switchOnText="Banned!" 
       dispatchFunction={ newState => this.props.changeBanTexter(row.original, newState) }/>,
-      maxWidth: 175
+      maxWidth: 150
     }, {
       Header: 'Number of texts',
       accessor: 'textIds.length',
-      maxWidth: 175
+      maxWidth: 150
     }]
 
     return (

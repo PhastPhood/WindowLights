@@ -9,3 +9,64 @@
   font-size: 24px;
   margin: 24px 0 24px 48px; 
 }
+/* Position and sizing of burger button */
+.bm-burger-button {
+  position: relative;
+  width: 36px;
+  height: 30px;
+  top: 24px;
+  left: 24px;
+  z-index: 0 !important;
+}
+
+/* Color/shape of burger icon bars */
+.bm-burger-bars {
+  background: $color-dark-background;
+}
+
+/* Position and sizing of clickable cross button */
+.bm-cross-button {
+  height: 24px;
+  width: 24px;
+}
+
+/* Color/shape of close button cross */
+.bm-cross {
+  background: $color-accent-text;
+}
+
+/* General sidebar styles */
+.bm-menu {
+  background: $color-dark-background;
+  padding: 1em 1.5em 0;
+  font-size: 1.15em;
+}
+
+/* Morph shape necessary with bubble or elastic */
+.bm-morph-shape {
+  fill: $color-dark-background;
+}
+
+/* Wrapper for item list */
+.bm-item-list {
+  color: $color-accent-text;
+  padding: 0.8rem;
+  box-sizing: border-box;
+}
+
+/* Styling of overlay */
+.bm-overlay {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.Header__MenuItem {
+  color: $color-accent-text;
+  font-weight: $font-weight-demi-bold;
+  padding: 0.8rem 0 0.8rem 0;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.Header__MenuItem:hover {
+  color: $color-accent-background;
+}

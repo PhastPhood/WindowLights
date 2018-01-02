@@ -1,12 +1,13 @@
 import * as React from 'react';
 import ReactTable from 'react-table';
 import { connect } from 'react-redux';
-import { distanceInWordsToNow, format } from 'date-fns';
+import { distanceInWordsToNow, format, isBefore } from 'date-fns';
 import { capitalize } from 'lodash';
 
 import { Text } from '../redux/model';
 import { fetchTexts, changeRejectText } from '../redux/reducer';
 import SwitchField from './SwitchField';
+import PhoneNumberField from './PhoneNumberField';
 
 interface TextLogStateProps {
   texts: Text[];
@@ -22,10 +23,16 @@ class TextLog extends React.Component<TextLogStateProps & TextLogDispatchProps, 
     const columns = [{
       Header: 'Number',
       accessor: 'phoneNumber',
-      maxWidth: 175
+      Cell: row => <PhoneNumberField phoneNumber={ row.value }/>,
+      width: 150
     }, {
       Header: 'Message',
-      accessor: 'message'
+      accessor: 'message',
+      Cell: row => {
+        const currentTime = Date.now();
+        const isRunning = isBefore(currentTime, row.original.endTime);
+        return <span className={ isRunning ? 'TextLog__MessageField--Running' : '' }>{ row.value }</span>
+      }
     }, {
       Header: 'Rejected',
       id: 'rejected',
@@ -35,13 +42,13 @@ class TextLog extends React.Component<TextLogStateProps & TextLogDispatchProps, 
         switchOffText="Not rejected"
         switchOnText="Rejected!" 
         dispatchFunction={ newState => this.props.changeRejectText(row.original, newState) }/>,
-      maxWidth: 175
+      maxWidth: 150
     }, {
       Header: 'Start time',
       id: 'startTime',
       accessor: text => format(text.startTime),
-      Cell: row => <span>{ capitalize(distanceInWordsToNow(row.original.startTime)) }</span>,
-      maxWidth: 250,
+      Cell: row => <span>{ capitalize(distanceInWordsToNow(row.original.startTime)) + ' ago' }</span>,
+      maxWidth: 150,
       sortMethod: (a, b) => {
         const aDate = new Date(a);
         const bDate = new Date(b);

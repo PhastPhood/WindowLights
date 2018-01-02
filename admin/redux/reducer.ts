@@ -77,7 +77,12 @@ export const changeTextMessage = (text: Text, newMessage: string) => dispatch =>
 export const changeRejectText = (text: Text, reject: boolean) => dispatch => {
   axios.post(`/api/text/${text.id}`, { ...text, rejected: reject })
     .then(response => response.data)
-    .then(text => dispatch(changeRejectTextAction(text, reject)))
+    .then(text => { 
+      dispatch(changeRejectTextAction(text, reject))
+      return axios.get('/api/texts');
+    })
+    .then(response => response.data)
+    .then(texts => dispatch(fetchTextsAction(texts)))
     .catch(err => {
       console.error.bind(err);
     });

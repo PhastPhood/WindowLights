@@ -270,8 +270,9 @@ export const postText = (req: Request, res: Response) => {
         return Promise.reject('Text not found');
       }
       let modifiedText;
+      console.log(req.params);
       for (let i = 0; i < texter.texts.length; i++) {
-        if (texter.texts[i].id === req.body.id) {
+        if (texter.texts[i].id === req.params.textId) {
           modifiedText = texter.texts[i];
           let newEndTime = modifiedText.endTime;
           if (req.body.rejected && !modifiedText.rejected) {
@@ -283,9 +284,9 @@ export const postText = (req: Request, res: Response) => {
             const currentTime = new Date();
             const hourFromStartTime = addHours(modifiedText.startTime, 1);
             if (currentTime < hourFromStartTime) {
-              const runningTexts = texter.texts.filter((text) => currentTime.valueOf() < text.endTime);
+              const runningTexts = texter.texts.filter(text => text !== modifiedText && currentTime.valueOf() < text.endTime);
               const startTimes = runningTexts.map(text => text.startTime);
-              const latestTime = startTimes.reduce((a, b) => Math.max(a, b));
+              const latestTime = startTimes.length !== 0 ? startTimes.reduce((a, b) => Math.max(a, b)) : 0;
               if (modifiedText.startTime > latestTime) {
                 newEndTime = hourFromStartTime;
                 for (let j = 0; j < runningTexts.length; j++) {
@@ -350,7 +351,7 @@ export const getTexters = (req: Request, res: Response) => {
 };
 
 export const postSendText = (req: Request, res: Response) => {
-  sendTextMessage(req.body.phoneNumber, req.body.message)
+  sendTextMessage(req.body.phoneNumber, req.body.message + ' [This was an admin text. Please don\'t reply unless you want your reply to show up on the window.]')
     .then(() => res.sendStatus(200))
     .catch(err => res.sendStatus(500));
 };

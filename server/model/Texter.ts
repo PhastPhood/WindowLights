@@ -10,6 +10,8 @@ export type TexterModel = mongoose.Document & {
   banned: boolean,
   tag: string,
 
+  replyTexts: string[],
+
   texts: TextModel[]
 };
 
@@ -21,6 +23,8 @@ const texterSchema = new mongoose.Schema({
 
   banned: Boolean,
   tag: String,
+
+  replyTexts: [String],
 
   texts: [textSchema]
 }, { usePushEach: true });

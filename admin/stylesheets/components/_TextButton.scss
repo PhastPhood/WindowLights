@@ -1,0 +1,65 @@
+.TextButton {
+  margin-left: 6px;
+  margin-right: 6px;
+}
+
+.TextButton__ModalOverlay {
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.TextButton__Modal {
+  background: $color-dark-background;
+  border-radius: 3px;
+  color: $color-accent-text;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.TextButton__ModalButtonContainer {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.TextButton__ModalInputArea {
+  font-size: $font-size-medium;
+  background: $color-dark-background;
+  border: 1px solid $color-semi-dark-background;
+  color: $color-accent-text;
+  width: 450px;
+  height: 48px;
+}
+
+.TextButton__ModalInputArea:focus {
+  outline: 0;
+}
+
+.TextButton__Modal:focus {
+  outline: 0;
+}
+
+.TextButton__ModalButton {
+  font-size: $font-size-medium;
+  margin-left: 8px;
+}
+
+.TextButton__ModalButton--Close {
+  background: $color-dark-background;
+  border: 1px solid $color-semi-dark-background;
+}
+
+.TextButton__ModalTitle {
+  font-size: $font-size-medium;
+  font-weight: $font-weight-demi-bold;
+  margin-bottom: 16px;
+}

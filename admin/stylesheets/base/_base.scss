@@ -33,3 +33,24 @@ p {
 a {
   color: $color-text;
 }
+
+button {
+  border: 0;
+  border-radius: 2px;
+  box-sizing: border-box;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: $font-family-body;
+  font-weight: $font-weight-demi-bold;
+  background: $color-accent-background;
+  color: $color-accent-text;
+  padding: 1px 6px 1px 6px;
+}
+
+button:focus, input[type="text"] {
+  outline: 0;
+}
+
+input {
+  font-family: $font-family-body;
+}

@@ -1,9 +1,5 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
 import Switch from 'react-toggle-switch';
-
-import { changeRejectText } from '../redux/reducer';
-import { Text } from '../redux/model';
 
 interface SwitchFieldProps {
   switch: boolean;
