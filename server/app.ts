@@ -14,7 +14,8 @@ import { getCurrentMessage,
   postText,
   getTexts,
   postTexter,
-  getTexters } from './controller/messageController';
+  getTexters,
+  postSendText } from './controller/messageController';
 import { updateCalendarEvents, googleJwtClient } from './controller/calendarController';
 import { parseTextEffects } from './model/Message';
 
@@ -59,6 +60,8 @@ app.get('/api/texts', getTexts);
 
 app.post('/api/texter/:texterId', postTexter);
 app.get('/api/texters', getTexters);
+
+app.post('/api/sendText', postSendText);
 
 app.get(['/admin', '/admin/*'], function (request, response) {
   response.sendFile(path.resolve(__dirname, '..', 'dist/admin/', 'index.html'));

@@ -22,93 +22,93 @@ export const getCurrentMessage = (req: Request, res: Response) => {
   let calendarDay = CalendarDay.findOne({ date: startOfDay(currentTime).valueOf() }).exec();
 
   Promise.all([recentTexters, calendarDay])
-      .then(results => {
-        if (results) {
-          let currentMessages: (TextModel | CalendarEventModel)[] = [];
+    .then(results => {
+      if (results) {
+        let currentMessages: (TextModel | CalendarEventModel)[] = [];
 
-          let texters: TexterModel[];
-          if (results.length > 0 && results[0]) {
-            texters = results[0] as TexterModel[];
+        let texters: TexterModel[];
+        if (results.length > 0 && results[0]) {
+          texters = results[0] as TexterModel[];
+          for (let i = 0; i < texters.length; i++) {
+            const texter = texters[i];
+            for (let j = 0; j < texter.texts.length; j++) {
+              const text = texter.texts[j];
+              if (currentTime.valueOf() <= text.endTime && currentTime.valueOf() >= text.startTime && !text.rejected) {
+                currentMessages.push(text);
+              }
+            }
+          }
+        }
+
+        let day: CalendarDayModel;
+        if (results.length > 1 && results[1]) {
+          day = results[1] as CalendarDayModel;
+          for (let i = 0; i < day.events.length; i++) {
+            const event = day.events[i];
+            if (currentTime.valueOf() <= event.endTime && currentTime.valueOf() >= event.startTime) {
+              currentMessages.push(event);
+            }
+          }
+        }
+
+        currentMessages.sort((a, b) => {
+          if (a.lastDisplayed === null && b.lastDisplayed === null) {
+            return a.startTime < b.startTime ? -1 : 1;
+          }
+          if (a.lastDisplayed === null) {
+            return -1;
+          }
+          if (b.lastDisplayed === null) {
+            return 1;
+          }
+          if (a.lastDisplayed === b.lastDisplayed) {
+            return 0;
+          }
+          return a.lastDisplayed < b.lastDisplayed ? -1 : 1;
+        });
+
+        let document: Document;
+        if (currentMessages.length > 0) {
+          const displayedMessage = currentMessages[0];
+
+          if (texters && (displayedMessage as TextModel).texterId) {
+            const text = displayedMessage as TextModel;
             for (let i = 0; i < texters.length; i++) {
-              const texter = texters[i];
-              for (let j = 0; j < texter.texts.length; j++) {
-                const text = texter.texts[j];
-                if (currentTime.valueOf() <= text.endTime && currentTime.valueOf() >= text.startTime && !text.rejected) {
-                  currentMessages.push(text);
+              if (texters[i]._id.equals(text.texterId)) {
+                const texter = texters[i] as TexterModel;
+                const index = texter.texts.indexOf(text);
+                if (index < 0) {
+                  res.sendStatus(500);
+                  return Promise.reject('Couldn\'t find text');
                 }
-              }
-            }
-          }
+                texter.texts[index].lastDisplayed = currentTime.valueOf();
   
-          let day: CalendarDayModel;
-          if (results.length > 1 && results[1]) {
-            day = results[1] as CalendarDayModel;
-            for (let i = 0; i < day.events.length; i++) {
-              const event = day.events[i];
-              if (currentTime.valueOf() <= event.endTime && currentTime.valueOf() >= event.startTime) {
-                currentMessages.push(event);
+                res.send({ body: text.message, color: text.color, effect: text.effect });
+                document = texter;
               }
             }
+          } else if (day) {
+            const event = displayedMessage as CalendarEventModel;
+            const index = day.events.indexOf(event);
+            if (index < 0) {
+              res.sendStatus(500);
+              return Promise.reject('Couldn\'t find event');
+            }
+
+            day.events[index].lastDisplayed = currentTime.valueOf();
+
+            res.send({ body: event.message, color: event.color, effect: event.effect });
+            document = day;
           }
-  
-          currentMessages.sort((a, b) => {
-            if (a.lastDisplayed === null && b.lastDisplayed === null) {
-              return a.startTime < b.startTime ? -1 : 1;
-            }
-            if (a.lastDisplayed === null) {
-              return -1;
-            }
-            if (b.lastDisplayed === null) {
-              return 1;
-            }
-            if (a.lastDisplayed === b.lastDisplayed) {
-              return 0;
-            }
-            return a.lastDisplayed < b.lastDisplayed ? -1 : 1;
-          });
-
-          let document: Document;
-          if (currentMessages.length > 0) {
-            const displayedMessage = currentMessages[0];
-
-            if (texters && (displayedMessage as TextModel).texterId) {
-              const text = displayedMessage as TextModel;
-              for (let i = 0; i < texters.length; i++) {
-                if (texters[i]._id.equals(text.texterId)) {
-                  const texter = texters[i] as TexterModel;
-                  const index = texter.texts.indexOf(text);
-                  if (index < 0) {
-                    res.sendStatus(500);
-                    return Promise.reject('Couldn\'t find text');
-                  }
-                  texter.texts[index].lastDisplayed = currentTime.valueOf();
-    
-                  res.send({ body: text.message, color: text.color, effect: text.effect });
-                  document = texter;
-                }
-              }
-            } else if (day) {
-              const event = displayedMessage as CalendarEventModel;
-              const index = day.events.indexOf(event);
-              if (index < 0) {
-                res.sendStatus(500);
-                return Promise.reject('Couldn\'t find event');
-              }
-
-              day.events[index].lastDisplayed = currentTime.valueOf();
-
-              res.send({ body: event.message, color: event.color, effect: event.effect });
-              document = day;
-            }
-            return document.save();
-          } else {
-            res.send({ body: EMPTY_SPACE_MESSAGE, color: DEFAULT_COLOR, effect: DEFAULT_EFFECT });
-          }
+          return document.save();
         } else {
           res.send({ body: EMPTY_SPACE_MESSAGE, color: DEFAULT_COLOR, effect: DEFAULT_EFFECT });
         }
-      })
-      .catch(err => res.sendStatus(500));
+      } else {
+        res.send({ body: EMPTY_SPACE_MESSAGE, color: DEFAULT_COLOR, effect: DEFAULT_EFFECT });
+      }
+    })
+    .catch(err => res.sendStatus(500));
 }
 
 export const postIncomingText = (req: Request, res: Response) => {
@@ -131,99 +131,100 @@ export const postIncomingText = (req: Request, res: Response) => {
   const phoneNumber = req.body.From.trim();
 
   Texter.findOne({ phoneNumber: phoneNumber }).exec()
-      .then(
-        (texter: TexterModel) => {
-          if (!texter) {  
-            texter = new Texter({
-              phoneNumber: phoneNumber,
-              city: req.body.City || '',
-              state: req.body.State || '',
-              texts: [],
-              banned: false,
-              tag: ''
-            }) as TexterModel;
-          }
-
-          let responseId = '';
-          let rejected = true;
-          let replace = false;
-          if (texter.banned) {
-            responseId = responses.bannedId;
-            rejected = true;
-            replace = false;
-          } else if (message.length >= 160) {
-            // check length of message
-            responseId = responses.tooLongId;
-            rejected = true;
-            replace = false;
-          } else if (swearjar.scorecard(message).discriminatory) {
-            // check for discriminatory language
-            responseId = responses.discriminatoryId;
-            rejected = true;
-            replace = false;
-          } else if (swearjar.scorecard(message).starwars) {
-            // check for discriminatory language
-            responseId = responses.starWarsId;
-            rejected = true;
-            replace = false;
-          } else {
-            // check for recent messages
-            rejected = false;
-            
-            // choose a response that has been sent the least
-            let responseCounts:any = {};
-            Object.keys(responses.emailResponses).map((key) => responseCounts[key] = 0);
-
-            // See how many times respones have been sent check if we need to replace text
-            texter.texts.forEach(previousText => {
-              responseCounts[previousText.responseId]++;
-              if (previousText.endTime > currentTime) {
-                previousText.endTime = currentTime;
-                replace = true;
-              }
-            });
-
-            let minResponse = Number.MAX_SAFE_INTEGER;
-            const responseCountKeys = Object.keys(responseCounts);
-            responseCountKeys.forEach(response => {
-              if (responseCounts[response] < minResponse) {
-                minResponse = responseCounts[response];
-              }
-            });
-
-            let filteredResponses = responseCountKeys.filter(
-                response => responseCounts[response] == minResponse);
-            responseId = filteredResponses[Math.floor(filteredResponses.length * Math.random())];
-          }
-
-          if (process.env.SEND_ADMIN_TEXTS === 'TRUE') {
-            notifyAdmin(phoneNumber + ': ' + message);
-          }
-
-          text.responseId = responseId;
-          if (!rejected) {
-            text.endTime = currentTime + DEFAULT_MESSAGE_DISPLAY_TIME * 1000;
-          }
-          text.rejected = rejected;
-          text.texterId = texter._id;
-
-          texter.texts.push(text);
-          return texter.save((err, texter) => {
-            if (err) {
-              res.status(500).send(err);
-              return Promise.reject('Couldn\'t find text');
-            }
-            res.set('Content-Type', 'text/xml');
-            const response = new twilio.twiml.MessagingResponse();
-            if (process.env.SEND_TEXTS === 'TRUE') {
-              const message = response.message();
-              message.body(responses.getResponseFromId(responseId, replace));
-            }
-            res.status(200).send(response.toString());
-          });
+    .then(
+      (texter: TexterModel) => {
+        if (!texter) {  
+          texter = new Texter({
+            phoneNumber: phoneNumber,
+            city: req.body.City || '',
+            state: req.body.State || '',
+            texts: [],
+            banned: false,
+            tag: ''
+          }) as TexterModel;
         }
-      )
-      .catch(err => res.sendStatus(500));
+
+        let responseId = '';
+        let rejected = true;
+        let replace = false;
+        if (texter.banned) {
+          responseId = responses.bannedId;
+          rejected = true;
+          replace = false;
+        } else if (message.length >= 160) {
+          // check length of message
+          responseId = responses.tooLongId;
+          rejected = true;
+          replace = false;
+        } else if (swearjar.scorecard(message).discriminatory) {
+          // check for discriminatory language
+          responseId = responses.discriminatoryId;
+          rejected = true;
+          replace = false;
+        } else if (swearjar.scorecard(message).starwars) {
+          // check for discriminatory language
+          responseId = responses.starWarsId;
+          rejected = true;
+          replace = false;
+        } else {
+          // check for recent messages
+          rejected = false;
+          
+          // choose a response that has been sent the least
+          let responseCounts:any = {};
+          Object.keys(responses.emailResponses).map((key) => responseCounts[key] = 0);
+
+          // See how many times respones have been sent check if we need to replace text
+          texter.texts.forEach(previousText => {
+            responseCounts[previousText.responseId]++;
+            if (previousText.endTime > currentTime) {
+              previousText.endTime = currentTime;
+              replace = true;
+            }
+          });
+
+          let minResponse = Number.MAX_SAFE_INTEGER;
+          const responseCountKeys = Object.keys(responseCounts);
+          responseCountKeys.forEach(response => {
+            if (responseCounts[response] < minResponse) {
+              minResponse = responseCounts[response];
+            }
+          });
+
+          let filteredResponses = responseCountKeys.filter(
+              response => responseCounts[response] == minResponse);
+          responseId = filteredResponses[Math.floor(filteredResponses.length * Math.random())];
+        }
+
+        text.responseId = responseId;
+        if (!rejected) {
+          text.endTime = currentTime + DEFAULT_MESSAGE_DISPLAY_TIME * 1000;
+        }
+        text.rejected = rejected;
+        text.texterId = texter._id;
+
+        texter.texts.push(text);
+        return { ...texter.save((err, texter) => {
+          if (err) {
+            res.status(500).send(err);
+            return Promise.reject('Couldn\'t find text');
+          }
+          res.set('Content-Type', 'text/xml');
+          const response = new twilio.twiml.MessagingResponse();
+          if (process.env.SEND_TEXTS === 'TRUE') {
+            const message = response.message();
+            message.body(responses.getResponseFromId(responseId, replace));
+          }
+          res.status(200).send(response.toString());
+        }), incomingText: text, phoneNumber: texter.phoneNumber };
+      }
+    )
+    .then(texter => {
+      if (process.env.SEND_ADMIN_TEXTS === 'TRUE') {
+        return notifyAdmin((<any>texter).phoneNumber + ': ' + (<any>texter).incomingText.message);
+      }
+    })
+    .catch(err => res.sendStatus(500));
 };
 
 function getTextObject(text: TextModel, phoneNumber: string) {
@@ -260,7 +261,7 @@ export const getTexts = (req: Request, res: Response) => {
     })
     .then((texts: TextModel[]) => res.status(200).send(texts))
     .catch(err => res.sendStatus(500));
-}
+};
 
 export const postText = (req: Request, res: Response) => {
   Texter.findOne({'texts._id': Types.ObjectId(req.params.textId)}).exec()
@@ -292,7 +293,7 @@ export const postText = (req: Request, res: Response) => {
     })
     .then(texter => res.status(200).send((<any>texter).modifiedText))
     .catch(err => res.sendStatus(404));
-}
+};
 
 function getTexterObject(texter: TexterModel) {
   return {
@@ -325,7 +326,7 @@ export const postTexter = (req: Request, res: Response) => {
     })
     .then((texter) => res.status(200).send(getTexterObject(texter)))
     .catch(err => res.sendStatus(404));
-}
+};
 
 export const getTexters = (req: Request, res: Response) => {
   Texter.find({}).exec()
@@ -338,4 +339,10 @@ export const getTexters = (req: Request, res: Response) => {
     })
     .then(texters => res.status(200).send(texters))
     .catch(err => res.sendStatus(500));
-}
+};
+
+export const postSendText = (req: Request, res: Response) => {
+  sendTextMessage(req.body.phoneNumber, req.body.message)
+    .then(() => res.sendStatus(200))
+    .catch(err => res.sendStatus(500));
+};

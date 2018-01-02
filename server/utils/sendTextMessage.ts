@@ -1,4 +1,4 @@
-const request = require('request');
+const request = require('request-promise-native');
 
 export default function sendTextMessage(to: string, body: string) {
   const form = {
@@ -6,7 +6,7 @@ export default function sendTextMessage(to: string, body: string) {
     To: to,
     Body: body
   };
-  request.post('https://api.twilio.com/2010-04-01/Accounts/' + process.env.TWILIO_ACCOUNT_SID + '/Messages.json')
+  return request.post('https://api.twilio.com/2010-04-01/Accounts/' + process.env.TWILIO_ACCOUNT_SID + '/Messages.json')
     .form(form)
     .auth(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN, true);
 }
