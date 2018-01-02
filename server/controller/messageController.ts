@@ -283,7 +283,15 @@ export const postText = (req: Request, res: Response) => {
             const currentTime = new Date();
             const hourFromStartTime = addHours(modifiedText.startTime, 1);
             if (currentTime < hourFromStartTime) {
-              newEndTime = hourFromStartTime;
+              const runningTexts = texter.texts.filter((text) => currentTime.valueOf() < text.endTime);
+              const startTimes = runningTexts.map(text => text.startTime);
+              const latestTime = startTimes.reduce((a, b) => Math.max(a, b));
+              if (modifiedText.startTime > latestTime) {
+                newEndTime = hourFromStartTime;
+                for (let j = 0; j < runningTexts.length; j++) {
+                  runningTexts[j].endTime = currentTime.valueOf();
+                }
+              }
             }
           }
           assign(modifiedText, req.body, { endTime: newEndTime });
