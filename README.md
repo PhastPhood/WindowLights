@@ -3,6 +3,7 @@
 Code for a window that displays messages that are texted to it. 
 
 Low-res pic — see a video on [my Instagram](https://www.instagram.com/jephphgao).
+
 ![Window lights](./example.png "Window lights")
 
 ### Rules:
